@@ -2,8 +2,8 @@ import streamlit as st
 import pandas as pd
 import matplotlib.pyplot as plt
 
-st.set_page_config(page_title="🧩 Advanced Data Merge Helper", layout="wide")
-st.title("🧩 Advanced Data Merge Helper")
+st.set_page_config(page_title="Advanced Data Merge Helper", layout="wide")
+st.title("Advanced Data Merge Helper")
 
 # 1. Upload files (CSV or Excel)
 col1, col2 = st.columns(2)
