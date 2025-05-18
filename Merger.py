@@ -61,33 +61,53 @@ def show_df_info(df, title="DataFrame Info"):
     st.subheader(title)
     st.text(s)
 
-def show_smart_plots(df, max_unique_cat=20):
-    st.subheader("Smart Data Visualizations")
+def show_smart_plots(df, max_unique_cat=20, outlier_threshold=3):
+    st.subheader("🔍 Smart Data Insights & Visualizations")
 
     numeric_cols = df.select_dtypes(include=['number']).columns.tolist()
     categorical_cols = df.select_dtypes(include=['object', 'category', 'bool']).columns.tolist()
 
     if numeric_cols:
-        st.markdown("**Numeric Columns Distribution (Histograms):**")
+        st.markdown("### 📊 Numeric Columns Analysis")
+
         for col in numeric_cols:
+            col_data = df[col].dropna()
+
+            if col_data.empty:
+                continue
+
+            # Detect outliers using Z-score
+            z_scores = (col_data - col_data.mean()) / col_data.std()
+            outliers = col_data[abs(z_scores) > outlier_threshold]
+            outlier_pct = len(outliers) / len(col_data) * 100
+
             fig, ax = plt.subplots()
-            df[col].dropna().hist(bins=30, ax=ax, color='skyblue')
-            ax.set_title(f"Histogram of {col}")
+            col_data.hist(bins=30, ax=ax, color='skyblue', edgecolor='black')
+            ax.axvline(col_data.mean(), color='red', linestyle='dashed', linewidth=1, label='Mean')
+            ax.axvline(col_data.median(), color='green', linestyle='dotted', linewidth=1, label='Median')
+            ax.set_title(f"{col} (Outliers: {outlier_pct:.1f}%)")
             ax.set_ylabel("Frequency")
+            ax.legend()
             st.pyplot(fig)
 
+            if outlier_pct > 5:
+                st.warning(f"Column **{col}** has a high outlier rate: {outlier_pct:.1f}% of values are potential outliers.")
+
     if categorical_cols:
-        st.markdown("**Categorical Columns Value Counts:**")
+        st.markdown("### 🧮 Categorical Columns Overview")
+
         for col in categorical_cols:
-            if df[col].nunique() <= max_unique_cat:
+            nunique = df[col].nunique()
+            if nunique <= max_unique_cat:
                 counts = df[col].value_counts()
                 fig, ax = plt.subplots()
                 counts.plot(kind='bar', ax=ax, color='coral')
-                ax.set_title(f"Value Counts of {col}")
+                ax.set_title(f"Value Counts of {col} (Unique: {nunique})")
                 ax.set_ylabel("Count")
                 st.pyplot(fig)
             else:
-                st.markdown(f"*Skipping column '{col}' (too many unique values)*")
+                st.info(f"Skipping column '{col}' (too many unique values: {nunique})")
+
 
 if file1 and file2:
     df1 = clean_columns(read_file(file1))
